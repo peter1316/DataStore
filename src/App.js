@@ -1,9 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import logo from "./logo.svg";
 import "./App.css";
-
 import { Amplify, DataStore, Predicates } from "aws-amplify";
 import { Post, PostStatus } from "./models";
+import "@aws-amplify/ui-react/styles.css";
+import {
+  Button,
+  Flex,
+  Heading,
+  Image,
+  Text,
+  TextField,
+  View,
+  withAuthenticator,
+} from '@aws-amplify/ui-react';
+
 
 // Use next two lines only if syncing with the cloud
 import awsconfig from "./aws-exports";
@@ -23,44 +34,140 @@ async function onDeleteAll() {
   await DataStore.delete(Post, Predicates.ALL);
 }
 
-async function onQuery() {
-  const posts = await DataStore.query(Post, (c) => c.rating.gt(4));
 
-  console.log(posts);
-}
 
-function App() {
+const App = ({ signOut, user }) => {
+
+  const [posts, setPosts] = useState([]);
+
   useEffect(() => {
-    const subscription = DataStore.observe(Post).subscribe((msg) => {
+      const subscription = DataStore.observe(Post).subscribe((msg) => {
       console.log(msg.model, msg.opType, msg.element);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+
+  useEffect(() => {
+    onQueryAll()
+  }, []);
+
+  async function onQueryAll() {
+    try {
+      const posts = await DataStore.query(Post);
+      console.log(posts);
+      setPosts(posts);
+    } catch (err) { console.log('error fetching data') }
+  };
+
+  async function deletePost({ id }) {
+    console.log('deletePost');
+    console.log(id);
+  }
+
+  async function onQuery() {
+    const posts = await DataStore.query(Post, (c) => c.rating.gt(4));
+    setPosts(posts);
+    console.log(posts);
+  }
+
   return (
-    <div className="App">
+    <View className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        
+        <div className="line">
+          <img src={logo} className="App-logo" alt="logo" />
+          <div style={{marginRight: '1rem'}}>Hello {user.username}</div>
+          <Button onClick={signOut} style={styles.button}>Sign out</Button>
+        </div>
+        
         <div>
           <input type="button" value="NEW" onClick={onCreate} />
           <input type="button" value="DELETE ALL" onClick={onDeleteAll} />
+          <input type="button" value="QUERY ALL" onClick={onQueryAll} />
           <input type="button" value="QUERY rating > 4" onClick={onQuery} />
         </div>
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+
+        <View margin="3rem 0">
+          {posts.map((post) => (
+            <Flex key={post.id || post.t} direction="row" justifyContent="center" alignItems="center">
+              <Text as="strong" fontWeight={700} color={"gray"}> {post.id} </Text>
+              <Text as="span" color={"gray"}>{post.title}</Text>
+              <Text as="span" color={"gray"}>{post.rating}</Text>
+              <Button variation="link" onClick={() => deletePost(post)}> Delete </Button>
+            </Flex>
+  ))}
+</View>
+
+
+
+        <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">Learn React</a>
       </header>
-    </div>
+    </View>
   );
 }
 
-export default App;
+const styles = {
+  container: { width: 400, margin: '0 auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 20 },
+  todo: {  marginBottom: 15 },
+  input: { border: 'none', backgroundColor: '#ddd', marginBottom: 10, padding: 8, fontSize: 18 },
+  todoName: { fontSize: 20, fontWeight: 'bold' },
+  todoDescription: { marginBottom: 0 },
+  button: { backgroundColor: 'black', color: 'white', outline: 'none', fontSize: 18, padding: '12px 12px' }
+}
+
+
+
+
+{/* <View className="App">
+<Heading level={1}>My Notes App</Heading>
+<View as="form" margin="3rem 0" onSubmit={createNote}>
+  <Flex direction="row" justifyContent="center">
+    <TextField
+      name="name"
+      placeholder="Note Name"
+      label="Note Name"
+      labelHidden
+      variation="quiet"
+      required
+    />
+    <TextField
+      name="description"
+      placeholder="Note Description"
+      label="Note Description"
+      labelHidden
+      variation="quiet"
+      required
+    />
+    <Button type="submit" variation="primary">
+      Create Note
+    </Button>
+  </Flex>
+</View>
+<Heading level={2}>Current Notes</Heading>
+<View margin="3rem 0">
+  {notes.map((note) => (
+    <Flex
+      key={note.id || note.name}
+      direction="row"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <Text as="strong" fontWeight={700}>
+        {note.name}
+      </Text>
+      <Text as="span">{note.description}</Text>
+      <Button variation="link" onClick={() => deleteNote(note)}>
+        Delete note
+      </Button>
+    </Flex>
+  ))}
+</View>
+<Button onClick={signOut}>Sign Out</Button>
+</View> */}
+
+
+// export default App;
+
+export default withAuthenticator(App);
