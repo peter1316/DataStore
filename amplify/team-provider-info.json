@@ -17,6 +17,12 @@
       },
       "api": {
         "BlogAppApi": {}
+      },
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "d3ctfem0clo12",
+          "type": "cicd"
+        }
       }
     }
   }
