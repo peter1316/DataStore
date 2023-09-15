@@ -14,6 +14,9 @@
     "categories": {
       "auth": {
         "datastoreb77f4ab5": {}
+      },
+      "api": {
+        "BlogAppApi": {}
       }
     }
   }
