@@ -4,41 +4,34 @@ import "./App.css";
 import { Amplify, DataStore, Predicates } from "aws-amplify";
 import { Post, PostStatus } from "./models";
 import "@aws-amplify/ui-react/styles.css";
-import {
-  Button,
-  Flex,
-  Heading,
-  Image,
-  Text,
-  TextField,
-  View,
-  withAuthenticator,
-} from '@aws-amplify/ui-react';
-
+import { Button, Flex, Text, View, withAuthenticator } from '@aws-amplify/ui-react';
 
 // Use next two lines only if syncing with the cloud
 import awsconfig from "./aws-exports";
 Amplify.configure(awsconfig);
 
-async function onCreate() {
-  await DataStore.save(
-    new Post({
-      title: `New title ${Date.now()}`,
-      rating: Math.floor(Math.random() * (8 - 1) + 1),
-      status: PostStatus.ACTIVE,
-    })
-  );
-}
+
 
 async function onDeleteAll() {
   await DataStore.delete(Post, Predicates.ALL);
 }
 
 
-
 const App = ({ signOut, user }) => {
 
   const [posts, setPosts] = useState([]);
+
+  async function onCreate() {
+    const post = await DataStore.save(
+      new Post({
+        title: `New title ${Date.now()}`,
+        rating: Math.floor(Math.random() * (8 - 1) + 1),
+        status: PostStatus.ACTIVE,
+      })
+    );
+    setPosts(posts);
+    setPosts([...posts, post]);
+  }
 
   useEffect(() => {
       const subscription = DataStore.observe(Post).subscribe((msg) => {
@@ -97,10 +90,8 @@ const App = ({ signOut, user }) => {
               <Text as="span" color={"gray"}>{post.rating}</Text>
               <Button variation="link" onClick={() => deletePost(post)}> Delete </Button>
             </Flex>
-  ))}
-</View>
-
-
+          ))}
+        </View>
 
         <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">Learn React</a>
       </header>
@@ -116,58 +107,5 @@ const styles = {
   todoDescription: { marginBottom: 0 },
   button: { backgroundColor: 'black', color: 'white', outline: 'none', fontSize: 18, padding: '12px 12px' }
 }
-
-
-
-
-{/* <View className="App">
-<Heading level={1}>My Notes App</Heading>
-<View as="form" margin="3rem 0" onSubmit={createNote}>
-  <Flex direction="row" justifyContent="center">
-    <TextField
-      name="name"
-      placeholder="Note Name"
-      label="Note Name"
-      labelHidden
-      variation="quiet"
-      required
-    />
-    <TextField
-      name="description"
-      placeholder="Note Description"
-      label="Note Description"
-      labelHidden
-      variation="quiet"
-      required
-    />
-    <Button type="submit" variation="primary">
-      Create Note
-    </Button>
-  </Flex>
-</View>
-<Heading level={2}>Current Notes</Heading>
-<View margin="3rem 0">
-  {notes.map((note) => (
-    <Flex
-      key={note.id || note.name}
-      direction="row"
-      justifyContent="center"
-      alignItems="center"
-    >
-      <Text as="strong" fontWeight={700}>
-        {note.name}
-      </Text>
-      <Text as="span">{note.description}</Text>
-      <Button variation="link" onClick={() => deleteNote(note)}>
-        Delete note
-      </Button>
-    </Flex>
-  ))}
-</View>
-<Button onClick={signOut}>Sign Out</Button>
-</View> */}
-
-
-// export default App;
 
 export default withAuthenticator(App);
