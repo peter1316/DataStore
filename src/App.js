@@ -10,13 +10,6 @@ import { Button, Flex, Text, View, withAuthenticator } from '@aws-amplify/ui-rea
 import awsconfig from "./aws-exports";
 Amplify.configure(awsconfig);
 
-
-
-async function onDeleteAll() {
-  await DataStore.delete(Post, Predicates.ALL);
-}
-
-
 const App = ({ signOut, user }) => {
 
   const [posts, setPosts] = useState([]);
@@ -31,6 +24,11 @@ const App = ({ signOut, user }) => {
     );
     setPosts(posts);
     setPosts([...posts, post]);
+  }
+
+  async function onDeleteAll() {
+    await DataStore.delete(Post, Predicates.ALL);
+    setPosts([]);
   }
 
   useEffect(() => {
@@ -55,8 +53,9 @@ const App = ({ signOut, user }) => {
   };
 
   async function deletePost({ id }) {
-    console.log('deletePost');
-    console.log(id);
+    const toDelete = await DataStore.query(Post, id);
+    DataStore.delete(toDelete);
+    onQueryAll();
   }
 
   async function onQuery() {
